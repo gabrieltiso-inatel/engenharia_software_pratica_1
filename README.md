@@ -4,12 +4,12 @@ Neste repositório se encontra a primeira atividade prática proposta na discipl
 Engenharia de Software no Inatel. O foco principal é praticar os conceitos de testes
 unitários e testes mock.
 
-*Gabriel Tiso Vinhas de Brito*: 236 - GES
-*Diego de Jesus Rodrigues*: 233 - GES
+**Gabriel Tiso Vinhas de Brito**: 236 - GES <br/>
+**Diego de Jesus Rodrigues**: 233 - GES
 
 Para rodar os testes do projeto, basta clonar o repositório e, em seu terminal, executar:
 
-```
+```bash
 mvn clean install # Se precisar instalar as dependências primeiro
 mvn test # Para rodar apenas os testes
 ```
