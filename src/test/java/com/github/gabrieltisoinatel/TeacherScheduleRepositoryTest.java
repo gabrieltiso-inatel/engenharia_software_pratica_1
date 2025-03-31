@@ -10,6 +10,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+
 public class TeacherScheduleRepositoryTest {
     @Mock
     private TeacherScheduleDataSource dataSource;
@@ -203,4 +207,44 @@ public class TeacherScheduleRepositoryTest {
             repository.stripUnnecessaryBuildings(parsedSchedule);
         });
     }
+
+    @Test
+public void testJsonStructure() {
+    String jsonResponse = """
+    {
+        "nomeDoProfessor": "Chris",
+        "horarioDeAtendimento": "Quinta, das 14h às 16h",
+        "periodo": "Vespertino",
+        "sala": "Sala 3",
+        "predio": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "6"
+        ]
+    }
+    """;
+
+    // Parse the JSON response
+    Gson gson = new Gson();
+    JsonObject jsonObject = gson.fromJson(jsonResponse, JsonObject.class);
+
+    // Assert the presence of required fields
+    assertEquals("Chris", jsonObject.get("nomeDoProfessor").getAsString());
+    assertEquals("Quinta, das 14h às 16h", jsonObject.get("horarioDeAtendimento").getAsString());
+    assertEquals("Vespertino", jsonObject.get("periodo").getAsString());
+    assertEquals("Sala 3", jsonObject.get("sala").getAsString());
+
+    // Assert the "predio" array
+    JsonArray predioArray = jsonObject.getAsJsonArray("predio");
+    assertEquals(5, predioArray.size());
+    assertEquals("1", predioArray.get(0).getAsString());
+    assertEquals("2", predioArray.get(1).getAsString());
+    assertEquals("3", predioArray.get(2).getAsString());
+    assertEquals("4", predioArray.get(3).getAsString());
+    assertEquals("6", predioArray.get(4).getAsString());
+    }
+
+    
 }
