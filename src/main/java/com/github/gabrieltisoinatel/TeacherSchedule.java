@@ -36,4 +36,8 @@ public class TeacherSchedule {
         return building;
     }
 
+    public void setBuilding(String[] building) {
+        this.building = building;
+    }
+
 }
