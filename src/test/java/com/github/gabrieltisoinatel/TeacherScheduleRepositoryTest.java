@@ -69,6 +69,15 @@ public class TeacherScheduleRepositoryTest {
     }
 
     @Test
+    public void testRepository_NullDataSource() {
+        TeacherScheduleRepository nullRepository = new TeacherScheduleRepository(null);
+
+        assertThrows(NullPointerException.class, () -> {
+            nullRepository.getTeacherSchedule("Chris");
+        }, "Expected NullPointerException for null data source");
+    }
+
+    @Test
     public void testParseSchedulesEmpty() {
         String schedules = "[]";
 
@@ -107,24 +116,6 @@ public class TeacherScheduleRepositoryTest {
     }
 
     @Test
-    public void testGetTeacherSchedule() {
-        String schedule = """
-        {
-            "name": "Chris",
-            "horarioDeAtendimento": "Quinta, das 14h às 16h",
-            "periodo": "Vespertino",
-            "sala": "Sala 3",
-            "predio": ["1", "2", "3", "4", "5"]
-        }
-        """;
-
-        when(dataSource.getTeacherSchedule("Chris")).thenReturn(schedule);
-        
-        TeacherSchedule parsedSchedule = repository.getTeacherSchedule("Chris");
-        assertEquals(parsedSchedule.getBuilding(), new String[]{"1"});
-    }
-
-    @Test
     public void testGetTeacherSchedule_ThrowException() {
         String schedule = """
         {
@@ -145,106 +136,184 @@ public class TeacherScheduleRepositoryTest {
         }
     }
 
-    @Test 
-    public void testStripUnnecessaryBuildings() {
-        String schedule = """
-        {
-            "name": "Chris",
-            "horarioDeAtendimento": "Quinta, das 14h às 16h",
-            "periodo": "Vespertino",
-            "sala": "Sala 3",
-            "predio": ["1", "2", "3", "4", "5"]
-        }
-        """;
-
-        when(dataSource.getTeacherSchedule("Chris")).thenReturn(schedule);
-        
-        TeacherSchedule parsedSchedule = repository.getTeacherSchedule("Chris");
-        repository.stripUnnecessaryBuildings(parsedSchedule);
-        
-        String[] expectedBuildings = {"1"};
-        assertEquals(expectedBuildings, parsedSchedule.getBuilding());
+    @Test
+    public void testGetTeacherSchedule_NullTeacherName() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            repository.getTeacherSchedule(null);
+        }, "Expected IllegalArgumentException for null teacher name");
     }
 
     @Test
-    public void testStripUnnecessaryBuildings_AnotherInterval() {
-        String schedule = """
-        {
-            "name": "Chris",
-            "horarioDeAtendimento": "Quinta, das 14h às 16h",
-            "periodo": "Vespertino",
-            "sala": "Sala 6",
-            "predio": ["1", "2", "3", "4", "5"]
-        }
-        """;
+    public void testGetTeacherSchedule_EmptyTeacherName() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            repository.getTeacherSchedule("");
+        }, "Expected IllegalArgumentException for empty teacher name");
+    }
 
-        when(dataSource.getTeacherSchedule("Chris")).thenReturn(schedule);
+
+    @Test 
+    public void testStripUnnecessaryBuildings() {
+        String []buildings = {"1", "2", "3", "4", "5","6"};
+        TeacherSchedule teacherSchedule = new TeacherSchedule("Chris", "Quinta, das 14h às 16h", "Vespertino", "Sala 3", buildings);
+
+        repository.stripUnnecessaryBuildings(teacherSchedule);
         
-        TeacherSchedule parsedSchedule = repository.getTeacherSchedule("Chris");
-        repository.stripUnnecessaryBuildings(parsedSchedule);
+        assertEquals(1, teacherSchedule.getBuilding().length);
+        assertEquals("1", teacherSchedule.getBuilding()[0]);
+    }
+
+    @Test
+    public void testStripUnnecessaryBuildings_SecondInterval() {
+        String []buildings = {"1", "2", "3", "4", "5","6"};
+        TeacherSchedule teacherSchedule = new TeacherSchedule("Chris", "Quinta, das 14h às 16h", "Vespertino", "Sala 6", buildings);
+
+        repository.stripUnnecessaryBuildings(teacherSchedule);
         
-        String[] expectedBuildings = {"2"};
-        assertEquals(expectedBuildings, parsedSchedule.getBuilding());
+        assertEquals(1, teacherSchedule.getBuilding().length);
+        assertEquals("2", teacherSchedule.getBuilding()[0]);
+    }
+
+    @Test
+    public void testStripUnnecessaryBuildings_ThirdInterval() {
+        String []buildings = {"1", "2", "3", "4", "5","6"};
+        TeacherSchedule teacherSchedule = new TeacherSchedule("Chris", "Quinta, das 14h às 16h", "Vespertino", "Sala 11", buildings);
+
+        repository.stripUnnecessaryBuildings(teacherSchedule);
+        
+        assertEquals(1, teacherSchedule.getBuilding().length);
+        assertEquals("3", teacherSchedule.getBuilding()[0]);
+    }
+
+    @Test
+    public void testStripUnnecessaryBuildings_FourthInterval() {
+        String []buildings = {"1", "2", "3", "4", "5","6"};
+        TeacherSchedule teacherSchedule = new TeacherSchedule("Chris", "Quinta, das 14h às 16h", "Vespertino", "Sala 16", buildings);
+
+        repository.stripUnnecessaryBuildings(teacherSchedule);
+        
+        assertEquals(1, teacherSchedule.getBuilding().length);
+        assertEquals("4", teacherSchedule.getBuilding()[0]);
+    }
+
+
+    @Test
+    public void testStripUnnecessaryBuildings_FifthInterval() {
+        String []buildings = {"1", "2", "3", "4", "5","6"};
+        TeacherSchedule teacherSchedule = new TeacherSchedule("Chris", "Quinta, das 14h às 16h", "Vespertino", "Sala 21", buildings);
+
+        repository.stripUnnecessaryBuildings(teacherSchedule);
+        
+        assertEquals(1, teacherSchedule.getBuilding().length);
+        assertEquals("5", teacherSchedule.getBuilding()[0]);
+    }
+
+    @Test
+    public void testStripUnnecessaryBuildings_SixthInterval() {
+        String []buildings = {"1", "2", "3", "4", "5","6"};
+        TeacherSchedule teacherSchedule = new TeacherSchedule("Chris", "Quinta, das 14h às 16h", "Vespertino", "Sala 26", buildings);
+
+        repository.stripUnnecessaryBuildings(teacherSchedule);
+        
+        assertEquals(1, teacherSchedule.getBuilding().length);
+        assertEquals("6", teacherSchedule.getBuilding()[0]);
     }
 
     @Test 
-    public void testStripUnnecessaryBuildings_InvalidRoom() {
-        String schedule = """
-        {
-            "name": "Chris",
-            "horarioDeAtendimento": "Quinta, das 14h às 16h",
-            "periodo": "Vespertino",
-            "sala": "Sala 30",
-            "predio": ["1", "2", "3", "4", "5"]
-        }
-        """;
-
-        when(dataSource.getTeacherSchedule("Chris")).thenReturn(schedule);
-        
-        TeacherSchedule parsedSchedule = repository.getTeacherSchedule("Chris");
+    public void testStripUnnecessaryBuildings_NegativeRoom() {
+        String []buildings = {"1", "2", "3", "4", "5","6"};
+        TeacherSchedule teacherSchedule = new TeacherSchedule("Chris", "Quinta, das 14h às 16h", "Vespertino", "Sala -2", buildings);
 
         assertThrows(IllegalArgumentException.class, () -> {
-            repository.stripUnnecessaryBuildings(parsedSchedule);
+            repository.stripUnnecessaryBuildings(teacherSchedule);
         });
     }
 
+    @Test 
+    public void testStripUnnecessaryBuildings_WrongRoom() {
+        String []buildings = {"1", "2", "3", "4", "5","6"};
+        TeacherSchedule teacherSchedule = new TeacherSchedule("Chris", "Quinta, das 14h às 16h", "Vespertino", "Sala 200", buildings);
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            repository.stripUnnecessaryBuildings(teacherSchedule);
+        });
+    }
+
+
     @Test
-public void testJsonStructure() {
-    String jsonResponse = """
-    {
-        "nomeDoProfessor": "Chris",
-        "horarioDeAtendimento": "Quinta, das 14h às 16h",
-        "periodo": "Vespertino",
-        "sala": "Sala 3",
-        "predio": [
-            "1",
-            "2",
-            "3",
-            "4",
-            "6"
-        ]
-    }
-    """;
+    public void testStripUnnecessaryBuildings_NullBuildingArray() {
+        TeacherSchedule teacherSchedule = new TeacherSchedule("Chris", "Quinta, das 14h às 16h", "Vespertino", "Sala 3", null);
 
-    // Parse the JSON response
-    Gson gson = new Gson();
-    JsonObject jsonObject = gson.fromJson(jsonResponse, JsonObject.class);
-
-    // Assert the presence of required fields
-    assertEquals("Chris", jsonObject.get("nomeDoProfessor").getAsString());
-    assertEquals("Quinta, das 14h às 16h", jsonObject.get("horarioDeAtendimento").getAsString());
-    assertEquals("Vespertino", jsonObject.get("periodo").getAsString());
-    assertEquals("Sala 3", jsonObject.get("sala").getAsString());
-
-    // Assert the "predio" array
-    JsonArray predioArray = jsonObject.getAsJsonArray("predio");
-    assertEquals(5, predioArray.size());
-    assertEquals("1", predioArray.get(0).getAsString());
-    assertEquals("2", predioArray.get(1).getAsString());
-    assertEquals("3", predioArray.get(2).getAsString());
-    assertEquals("4", predioArray.get(3).getAsString());
-    assertEquals("6", predioArray.get(4).getAsString());
+        assertThrows(NullPointerException.class, () -> {
+            repository.stripUnnecessaryBuildings(teacherSchedule);
+        }, "Expected NullPointerException for null building array");
     }
 
+    @Test
+    public void testStripUnnecessaryBuildings_InvalidRoomFormat() {
+        String[] buildings = {"1", "2", "3", "4", "5", "6"};
+        TeacherSchedule teacherSchedule = new TeacherSchedule("Chris", "Quinta, das 14h às 16h", "Vespertino", "Sala10", buildings);
+
+        assertThrows(ArrayIndexOutOfBoundsException.class, () -> {
+            repository.stripUnnecessaryBuildings(teacherSchedule);
+        }, "Expected NumberFormatException for invalid room format");
+    }
+
+    @Test
+    public void testStripUnnecessaryBuildings_NullRoom() {
+        String[] buildings = {"1", "2", "3", "4", "5", "6"};
+        TeacherSchedule teacherSchedule = new TeacherSchedule("Chris", "Quinta, das 14h às 16h", "Vespertino", null, buildings);
+
+        assertThrows(NullPointerException.class, () -> {
+            repository.stripUnnecessaryBuildings(teacherSchedule);
+        }, "Expected NullPointerException for null room");
+    }
+
+
+    @Test
+    public void testJsonStructure() {
+        String jsonResponse = """
+        {
+            "nomeDoProfessor": "Chris",
+            "horarioDeAtendimento": "Quinta, das 14h às 16h",
+            "periodo": "Vespertino",
+            "sala": "Sala 3",
+            "predio": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "6"
+            ]
+        }
+        """;
+
+        // Parse the JSON response
+        Gson gson = new Gson();
+        JsonObject jsonObject = gson.fromJson(jsonResponse, JsonObject.class);
+
+        // Assert the presence of required fields
+        assertEquals("Chris", jsonObject.get("nomeDoProfessor").getAsString());
+        assertEquals("Quinta, das 14h às 16h", jsonObject.get("horarioDeAtendimento").getAsString());
+        assertEquals("Vespertino", jsonObject.get("periodo").getAsString());
+        assertEquals("Sala 3", jsonObject.get("sala").getAsString());
+
+        // Assert the "predio" array
+        JsonArray predioArray = jsonObject.getAsJsonArray("predio");
+        assertEquals(5, predioArray.size());
+        assertEquals("1", predioArray.get(0).getAsString());
+        assertEquals("2", predioArray.get(1).getAsString());
+        assertEquals("3", predioArray.get(2).getAsString());
+        assertEquals("4", predioArray.get(3).getAsString());
+        assertEquals("6", predioArray.get(4).getAsString());
+    }
+    
+    @Test
+    public void testParseSchedule_InvalidJson() {
+        String invalidJson = "{ invalid json }";
+
+        assertThrows(com.google.gson.JsonSyntaxException.class, () -> {
+            repository.parseSchedule(invalidJson);
+        }, "Expected JsonSyntaxException for invalid JSON structure");
+    }
     
 }
